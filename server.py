@@ -4,34 +4,41 @@ import yaml
 import requests
 import json
 import datetime
+import logging
 from fastmcp import FastMCP  # MCP server SDK
 
-# Load pipeline metadata from config.yaml
+# Base directory for all file operations (ensure cwd usage)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Load pipeline metadata from config.yaml in cwd
+CONFIG_PATH = os.path.join(BASE_DIR, "config.yaml")
+
 def load_config(path: str) -> dict:
     with open(path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
     return {p["name"]: p for p in data.get("pipelines", [])}
 
-# Update CONFIG_PATH as needed
-CONFIG_PATH = r"Q:\wagit\AI\AdoMcp\config.yaml"
 pipelines = load_config(CONFIG_PATH)
 
 # Initialize FastMCP server
 dependencies = ["requests", "PyYAML"]
 mcp = FastMCP(
     name="ado-pipelines",
-    version="0.1.1",  # bump version to refresh manifest
+    version="0.1.2",  # bump version to refresh manifest
     dependencies=dependencies,
 )
 
-# Helper to dump responses
+# Helper to dump responses into cwd/responses
 def dump_response(prefix: str, data):
-    os.makedirs("responses", exist_ok=True)
+    logging.info(f"Dumping response with prefix: {prefix}")
+    responses_dir = os.path.join(BASE_DIR, "responses")
+    os.makedirs(responses_dir, exist_ok=True)
     timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = f"{prefix}_{timestamp}.json"
-    path = os.path.join("responses", filename)
+    path = os.path.join(responses_dir, filename)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+    logging.info(f"Response dumped to: {path}")
     return path
 
 @mcp.tool(
@@ -62,9 +69,8 @@ def list_runs(name: str, top: int) -> dict:
     # Apply local limit
     data["value"] = data.get("value", [])[:top]
 
-    # Dump to responses folder
-    dump_path = dump_response("list_runs", data)
-    # You can log or return the dump_path if desired
+    # Dump to cwd/responses folder
+    dump_response("list_runs", data)
     return data
 
 @mcp.tool(
@@ -101,8 +107,8 @@ def trigger_bulk(name: str, count: int) -> list:
         resp.raise_for_status()
         results.append(resp.json())
 
-    # Dump bulk trigger responses
-    dump_path = dump_response("trigger_bulk", results)
+    # Dump bulk trigger responses into cwd/responses folder
+    dump_response("trigger_bulk", results)
     return results
 
 if __name__ == "__main__":

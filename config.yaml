@@ -4,3 +4,8 @@ pipelines:
     project: "Antares"
     pipelineID: 331421
     branch: "user/mm/104-prev-state"
+  - name: "mmorrison1 stampy"
+    organization: "msazure"
+    project: "Antares"
+    pipelineID: 390216
+    branch: "dev"
