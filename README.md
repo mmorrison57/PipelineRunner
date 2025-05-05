@@ -1,0 +1,63 @@
+# AdoMcp Tool
+
+## Overview
+The AdoMcp tool is designed to interact with Azure DevOps pipelines, providing functionality to trigger and monitor pipeline runs. It simplifies the process of managing pipelines by offering a streamlined interface for common tasks.
+
+## Current Capabilities
+
+1. **Trigger Pipeline Runs**
+   - The tool allows users to initiate pipeline runs for configured pipelines. For example, the `Linux CI/CD` pipeline can be triggered directly from the tool in batches (so Amber Renton can kick off 10 runs at a time!! No more forever clicking :)).
+
+2. **Monitor Pipeline Runs**
+   - Users can monitor the status and results of pipeline runs, including accessing detailed build results through generated links.
+
+## Configuration
+The tool uses a `config.yaml` file to define the pipelines it interacts with. Each pipeline entry includes:
+- `name`: The name of the pipeline. This can be any user-defined string for identification purposes.
+- `organization`: The Azure DevOps organization.
+- `project`: The Azure DevOps project.
+- `pipelineID`: The unique ID of the pipeline.
+- `branch`: The branch associated with the pipeline.
+
+Example configuration:
+```yaml
+pipelines:
+  - name: "(Dev) CI-Linux-Integration"
+    organization: "msazure"
+    project: "Antares"
+    pipelineID: 331421
+    branch: "user/mm/104-prev-state"
+  - name: "mmorrison1 stampy"
+    organization: "msazure"
+    project: "Antares"
+    pipelineID: 390216
+    branch: "dev"
+```
+
+## Requirements
+- Python 3.9 or later
+- Azure DevOps access permissions for the configured pipelines
+
+## Usage
+1. Configure the `config.yaml` file with the desired pipelines.
+2. Use the tool to trigger or monitor pipeline runs.
+
+## Steps to Start MCP Server
+1. Open the project folder in Visual Studio Code (VSCode).
+2. Ensure Python 3.9 or later is installed and set up in your environment.
+3. Open VSCode command pallate and type "MCP" - select add server.
+4. Run the following command to start the MCP server (may require using full python file path):
+   ```bash
+   python server.py
+   ```
+5. Use github copilot chat in agent mode.
+
+## Example Usage
+* `Trigger 3 runs of the integration test pipeline` 
+* `List the most recent 5 runs of the integration test pipeline` (less useful)
+* `Kick off my stampy`
+
+## Future Enhancements
+- Add support for listing all pipeline runs.
+- Implement detailed logging for better traceability.
+- Provide a graphical user interface for easier interaction.

@@ -1,0 +1,84 @@
+[
+  {
+    "_links": {
+      "self": {
+        "href": "https://dev.azure.com/msazure/9912b5ff-89a4-4651-bae2-9452eb7992a8/_apis/pipelines/331421/runs/123238421"
+      },
+      "web": {
+        "href": "https://dev.azure.com/msazure/9912b5ff-89a4-4651-bae2-9452eb7992a8/_build/results?buildId=123238421"
+      },
+      "pipeline.web": {
+        "href": "https://dev.azure.com/msazure/9912b5ff-89a4-4651-bae2-9452eb7992a8/_build/definition?definitionId=331421"
+      },
+      "pipeline": {
+        "href": "https://dev.azure.com/msazure/9912b5ff-89a4-4651-bae2-9452eb7992a8/_apis/pipelines/331421?revision=11"
+      }
+    },
+    "templateParameters": {},
+    "pipeline": {
+      "url": "https://dev.azure.com/msazure/9912b5ff-89a4-4651-bae2-9452eb7992a8/_apis/pipelines/331421?revision=11",
+      "id": 331421,
+      "revision": 11,
+      "name": "(Dev) CI-Linux-Integration",
+      "folder": "\\Antares-Websites\\OfficialCIs\\Other"
+    },
+    "state": "inProgress",
+    "createdDate": "2025-05-05T21:21:45.2132472Z",
+    "url": "https://dev.azure.com/msazure/9912b5ff-89a4-4651-bae2-9452eb7992a8/_apis/pipelines/331421/runs/123238421",
+    "resources": {
+      "repositories": {
+        "self": {
+          "repository": {
+            "id": "48b88806-5a4d-45da-b342-3fa25e682def",
+            "type": "azureReposGit"
+          },
+          "refName": "refs/heads/user/mm/104-prev-state",
+          "version": "039501cb9749203ac3034ff04308dd213de553e5"
+        }
+      }
+    },
+    "id": 123238421,
+    "name": "20250505.11"
+  },
+  {
+    "_links": {
+      "self": {
+        "href": "https://dev.azure.com/msazure/9912b5ff-89a4-4651-bae2-9452eb7992a8/_apis/pipelines/331421/runs/123238423"
+      },
+      "web": {
+        "href": "https://dev.azure.com/msazure/9912b5ff-89a4-4651-bae2-9452eb7992a8/_build/results?buildId=123238423"
+      },
+      "pipeline.web": {
+        "href": "https://dev.azure.com/msazure/9912b5ff-89a4-4651-bae2-9452eb7992a8/_build/definition?definitionId=331421"
+      },
+      "pipeline": {
+        "href": "https://dev.azure.com/msazure/9912b5ff-89a4-4651-bae2-9452eb7992a8/_apis/pipelines/331421?revision=11"
+      }
+    },
+    "templateParameters": {},
+    "pipeline": {
+      "url": "https://dev.azure.com/msazure/9912b5ff-89a4-4651-bae2-9452eb7992a8/_apis/pipelines/331421?revision=11",
+      "id": 331421,
+      "revision": 11,
+      "name": "(Dev) CI-Linux-Integration",
+      "folder": "\\Antares-Websites\\OfficialCIs\\Other"
+    },
+    "state": "inProgress",
+    "createdDate": "2025-05-05T21:21:46.5554877Z",
+    "url": "https://dev.azure.com/msazure/9912b5ff-89a4-4651-bae2-9452eb7992a8/_apis/pipelines/331421/runs/123238423",
+    "resources": {
+      "repositories": {
+        "self": {
+          "repository": {
+            "id": "48b88806-5a4d-45da-b342-3fa25e682def",
+            "type": "azureReposGit"
+          },
+          "refName": "refs/heads/user/mm/104-prev-state",
+          "version": "039501cb9749203ac3034ff04308dd213de553e5"
+        }
+      }
+    },
+    "id": 123238423,
+    "name": "20250505.12"
+  }
+]

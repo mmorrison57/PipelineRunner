@@ -1,0 +1,43 @@
+[
+  {
+    "_links": {
+      "self": {
+        "href": "https://dev.azure.com/msazure/9912b5ff-89a4-4651-bae2-9452eb7992a8/_apis/pipelines/390216/runs/123238965"
+      },
+      "web": {
+        "href": "https://dev.azure.com/msazure/9912b5ff-89a4-4651-bae2-9452eb7992a8/_build/results?buildId=123238965"
+      },
+      "pipeline.web": {
+        "href": "https://dev.azure.com/msazure/9912b5ff-89a4-4651-bae2-9452eb7992a8/_build/definition?definitionId=390216"
+      },
+      "pipeline": {
+        "href": "https://dev.azure.com/msazure/9912b5ff-89a4-4651-bae2-9452eb7992a8/_apis/pipelines/390216?revision=4"
+      }
+    },
+    "templateParameters": {},
+    "pipeline": {
+      "url": "https://dev.azure.com/msazure/9912b5ff-89a4-4651-bae2-9452eb7992a8/_apis/pipelines/390216?revision=4",
+      "id": 390216,
+      "revision": 4,
+      "name": "CI-mmorrison1",
+      "folder": "\\Antares-Websites\\User\\mmorrison"
+    },
+    "state": "inProgress",
+    "createdDate": "2025-05-05T21:26:51.3622302Z",
+    "url": "https://dev.azure.com/msazure/9912b5ff-89a4-4651-bae2-9452eb7992a8/_apis/pipelines/390216/runs/123238965",
+    "resources": {
+      "repositories": {
+        "self": {
+          "repository": {
+            "id": "48b88806-5a4d-45da-b342-3fa25e682def",
+            "type": "azureReposGit"
+          },
+          "refName": "refs/heads/dev",
+          "version": "71f9d3f8893690abc1bc85c3a287fb659e79b80c"
+        }
+      }
+    },
+    "id": 123238965,
+    "name": "20250505.1"
+  }
+]
