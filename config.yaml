@@ -1,0 +1,5 @@
+pipelines:
+  - name: "(Dev) CI-Linux-Integration"
+    organization: "msazure"
+    project: "Antares"
+    pipelineID: 331421
