@@ -4,72 +4,84 @@ import yaml
 import requests
 import json
 import datetime
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP  # MCP server SDK
 
 # Load pipeline metadata from config.yaml
-# Note: use raw string for Windows paths
-def load_config(path=r"Q:\wagit\AI\AdoMcp\config.yaml"):
+def load_config(path: str) -> dict:
     with open(path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
     return {p["name"]: p for p in data.get("pipelines", [])}
 
-pipelines = load_config()
+# Update CONFIG_PATH as needed
+CONFIG_PATH = r"Q:\wagit\AI\AdoMcp\config.yaml"
+pipelines = load_config(CONFIG_PATH)
 
 # Initialize FastMCP server
-dep = ["requests", "PyYAML"]
+dependencies = ["requests", "PyYAML"]
 mcp = FastMCP(
     name="ado-pipelines",
-    version="0.1.0",
-    dependencies=dep,
+    version="0.1.1",  # bump version to refresh manifest
+    dependencies=dependencies,
 )
 
-@mcp.tool()
+# Helper to dump responses
+def dump_response(prefix: str, data):
+    os.makedirs("responses", exist_ok=True)
+    timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f"{prefix}_{timestamp}.json"
+    path = os.path.join("responses", filename)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+    return path
+
+@mcp.tool(
+    name="list_runs",
+    description="List recent Azure DevOps pipeline runs (local limit to 'top')."
+)
 def list_runs(name: str, top: int) -> dict:
-    """List recent Azure DevOps pipeline runs."""
     p = pipelines.get(name)
     if not p:
-        raise ValueError(f"Pipeline '{name}' not found in config.yaml")
+        raise ValueError(f"Pipeline '{name}' not in config.yaml")
 
     pat = os.getenv("AZURE_DEVOPS_PAT") or os.getenv("AZURE_DEVOPS_EXT_PAT")
     if not pat:
-        raise ValueError("Environment variable AZURE_DEVOPS_PAT is not set")
+        raise ValueError("AZURE_DEVOPS_PAT env var not set")
 
-    # Construct Basic auth header
     token = base64.b64encode(f":{pat}".encode()).decode()
     headers = {"Authorization": f"Basic {token}"}
 
-    # Call the ADO List Runs API (no $top param supported)
+    # Call ADO List Runs (no server-side $top)
     url = (
         f"https://dev.azure.com/{p['organization']}/{p['project']}"
         f"/_apis/pipelines/{p['pipelineID']}/runs?api-version=7.1"
     )
     resp = requests.get(url, headers=headers, timeout=10)
     resp.raise_for_status()
-    response_json = resp.json()
+    data = resp.json()
 
-    # Locally limit to `top` runs
-    response_json["value"] = response_json.get("value", [])[:top]
+    # Apply local limit
+    data["value"] = data.get("value", [])[:top]
 
-    # Write a timestamped copy for debugging
-    os.makedirs("responses", exist_ok=True)
-    filename = os.path.join(
-        "responses",
-        f"list_runs_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    )
-    with open(filename, "w", encoding="utf-8") as f:
-        json.dump(response_json, f, indent=2)
-    return response_json
+    # Dump to responses folder
+    dump_path = dump_response("list_runs", data)
+    # You can log or return the dump_path if desired
+    return data
 
-@mcp.tool()
+@mcp.tool(
+    name="trigger_bulk",
+    description="Trigger the configured pipeline 'count' times on its branch."
+)
 def trigger_bulk(name: str, count: int) -> list:
-    """Trigger the Azure DevOps pipeline `count` times in bulk."""
     p = pipelines.get(name)
     if not p:
-        raise ValueError(f"Pipeline '{name}' not found in config.yaml")
+        raise ValueError(f"Pipeline '{name}' not in config.yaml")
+    branch = p.get("branch")
+    if not branch:
+        raise ValueError(f"Pipeline '{name}' missing 'branch' in config.yaml")
 
     pat = os.getenv("AZURE_DEVOPS_PAT") or os.getenv("AZURE_DEVOPS_EXT_PAT")
     if not pat:
-        raise ValueError("Environment variable AZURE_DEVOPS_PAT is not set")
+        raise ValueError("AZURE_DEVOPS_PAT env var not set")
 
     token = base64.b64encode(f":{pat}".encode()).decode()
     headers = {
@@ -81,19 +93,16 @@ def trigger_bulk(name: str, count: int) -> list:
         f"https://dev.azure.com/{p['organization']}/{p['project']}"
         f"/_apis/pipelines/{p['pipelineID']}/runs?api-version=7.1"
     )
+    body = {"resources": {"repositories": {"self": {"refName": branch}}}}
+
     results = []
     for _ in range(count):
-        resp = requests.post(url, headers=headers, timeout=10)
+        resp = requests.post(url, headers=headers, json=body, timeout=10)
         resp.raise_for_status()
         results.append(resp.json())
 
-    os.makedirs("responses", exist_ok=True)
-    filename = os.path.join(
-        "responses",
-        f"trigger_bulk_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    )
-    with open(filename, "w", encoding="utf-8") as f:
-        json.dump(results, f, indent=2)
+    # Dump bulk trigger responses
+    dump_path = dump_response("trigger_bulk", results)
     return results
 
 if __name__ == "__main__":
