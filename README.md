@@ -13,7 +13,7 @@ The AdoMcp tool is designed to interact with Azure DevOps pipelines, providing f
 
 ## Configuration
 The tool uses a `config.yaml` file to define the pipelines it interacts with. Each pipeline entry includes:
-- `name`: The name of the pipeline. This can be any user-defined string for identification purposes.
+- `name`: The name of the pipeline. This can be any user-defined string for identification purposes. Make the names distinct enought that copilot recognizes which pipeline is the correct one.
 - `organization`: The Azure DevOps organization.
 - `project`: The Azure DevOps project.
 - `pipelineID`: The unique ID of the pipeline.
@@ -57,7 +57,6 @@ pipelines:
 * `List the most recent 5 runs of the integration test pipeline` (less useful)
 * `Kick off my stampy`
 
-## Future Enhancements
-- Add support for listing all pipeline runs.
-- Implement detailed logging for better traceability.
-- Provide a graphical user interface for easier interaction.
+
+## Random Note
+* I built this using github copilot in Agent mode in under an hour. Agent mode is very useful for quick POCs and validation. This is my example of automating something that we spend time on which could be optimized. Just 1 example!
