@@ -7,10 +7,10 @@ import datetime
 from mcp.server.fastmcp import FastMCP
 
 # Load pipeline metadata from config.yaml
-def load_config(path="Q:\wagit\AI\AdoMcp\config.yaml"):
-    with open(path, "r") as f:
+# Note: use raw string for Windows paths
+def load_config(path=r"Q:\wagit\AI\AdoMcp\config.yaml"):
+    with open(path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
-    # Build a dict for quick lookup
     return {p["name"]: p for p in data.get("pipelines", [])}
 
 pipelines = load_config()
@@ -18,9 +18,9 @@ pipelines = load_config()
 # Initialize FastMCP server
 dep = ["requests", "PyYAML"]
 mcp = FastMCP(
-    "ado-pipelines",             # server name
-    version="0.1.0",             # version
-    dependencies=dep,             # declare dependencies
+    name="ado-pipelines",
+    version="0.1.0",
+    dependencies=dep,
 )
 
 @mcp.tool()
@@ -38,17 +38,24 @@ def list_runs(name: str, top: int) -> dict:
     token = base64.b64encode(f":{pat}".encode()).decode()
     headers = {"Authorization": f"Basic {token}"}
 
+    # Call the ADO List Runs API (no $top param supported)
     url = (
         f"https://dev.azure.com/{p['organization']}/{p['project']}"
-        f"/_apis/pipelines/{p['pipelineID']}/runs"
-        f"?api-version=7.1"
+        f"/_apis/pipelines/{p['pipelineID']}/runs?api-version=7.1"
     )
-    resp = requests.get(url, headers=headers)
+    resp = requests.get(url, headers=headers, timeout=10)
     resp.raise_for_status()
     response_json = resp.json()
+
+    # Locally limit to `top` runs
     response_json["value"] = response_json.get("value", [])[:top]
+
+    # Write a timestamped copy for debugging
     os.makedirs("responses", exist_ok=True)
-    filename = os.path.join("responses", f"list_runs_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+    filename = os.path.join(
+        "responses",
+        f"list_runs_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    )
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(response_json, f, indent=2)
     return response_json
@@ -76,11 +83,15 @@ def trigger_bulk(name: str, count: int) -> list:
     )
     results = []
     for _ in range(count):
-        resp = requests.post(url, headers=headers)
+        resp = requests.post(url, headers=headers, timeout=10)
         resp.raise_for_status()
         results.append(resp.json())
+
     os.makedirs("responses", exist_ok=True)
-    filename = os.path.join("responses", f"trigger_bulk_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+    filename = os.path.join(
+        "responses",
+        f"trigger_bulk_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    )
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
     return results
