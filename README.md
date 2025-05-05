@@ -37,6 +37,8 @@ pipelines:
 ## Requirements
 - Python 3.9 or later
 - Azure DevOps access permissions for the configured pipelines
+- ADO PAT Token with Pipeline resources: https://msazure.visualstudio.com/_usersSettings/tokens
+     - Once you have a token, run `setx AZURE_DEVOPS_EXT_PAT "<your_pat_here>"` from cmd prompt 
 
 ## Usage
 1. Configure the `config.yaml` file with the desired pipelines.
@@ -60,3 +62,4 @@ pipelines:
 
 ## Random Note
 * I built this using github copilot in Agent mode in under an hour. Agent mode is very useful for quick POCs and validation. This is my example of automating something that we spend time on which could be optimized. Just 1 example!
+* Obviously this could also just be a script you run where you pass in some parameters to execute a pipeline. But the demonstration here is that with MCP we can build tools which we call from copilot / NLP. Another thought I had is this but with AntaresCMD commands. Imagine asking copilot to spin up a site with dynamic cache and http logging enabled - and let it run! Just one of many thoughts...
