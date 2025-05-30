@@ -1,5 +1,5 @@
 pipelines:
-  - name: "(Dev) CI-Linux-Integration"
+  - name: "integration"
     organization: "msazure"
     project: "Antares"
     pipelineID: 331421
@@ -9,3 +9,11 @@ pipelines:
     project: "Antares"
     pipelineID: 390216
     branch: "dev"
+
+# Local repositories configuration
+# This allows referencing repos by name or partial name instead of full paths
+repositories:
+  - name: "Antares-Websites"
+    aliases: ["websites", "antares-websites", "aapt-antares-websites"]
+    path: "q:\\wagit\\AAPT-Antares-Websites"
+    description: "Main Antares websites repository"
