@@ -133,6 +133,8 @@ def run_az_command(command: List[str]) -> Dict[str, Any]:
         if command[0] == "az":
             command[0] = _azure_cli_path
         
+        # Print to console for visibility in GitHub chat
+        print(f"🔄 Executing Azure CLI command: {' '.join(command)}")
         logger.info(f"Running Azure CLI command: {' '.join(command)}")
         
         # Run the command with shorter timeout for better responsiveness

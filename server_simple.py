@@ -77,8 +77,25 @@ def run_az_direct(command: List[str]) -> Dict[str, Any]:
         command[0] = az_path
     
     try:
+        print(f"Executing Azure CLI command: {' '.join(command)}")
         logger.info(f"Running: {' '.join(command)}")
-        result = subprocess.run(command, capture_output=True, text=True, timeout=30, check=False)
+        
+        # Add environment variables to prevent interactive prompts
+        env = os.environ.copy()
+        env['AZURE_CORE_NO_COLOR'] = '1'
+        env['AZURE_CORE_ONLY_SHOW_ERRORS'] = 'true'
+        
+        print(f"Starting command execution with 5 second timeout...")
+        result = subprocess.run(
+            command, 
+            capture_output=True, 
+            text=True, 
+            timeout=5,  # Even shorter timeout
+            check=False,
+            env=env,
+            stdin=subprocess.DEVNULL  # Prevent any stdin interaction
+        )
+        print(f"Command completed with return code: {result.returncode}")
         
         if result.returncode == 0:
             try:
@@ -100,8 +117,10 @@ def run_az_direct(command: List[str]) -> Dict[str, Any]:
             return {"success": False, "error": error}
             
     except subprocess.TimeoutExpired:
-        return {"success": False, "error": "Command timed out"}
+        print("Command timed out after 5 seconds")
+        return {"success": False, "error": "Command timed out after 5 seconds"}
     except Exception as e:
+        print(f"Exception occurred: {str(e)}")
         return {"success": False, "error": str(e)}
 
 # Initialize MCP server
