@@ -1,0 +1,26 @@
+[
+  {
+    "success": true,
+    "run_number": 1,
+    "pipeline_name": "integration",
+    "branch_used": "dev",
+    "run_id": 126026324,
+    "run_name": null,
+    "state": null,
+    "created_date": null,
+    "url": "https://msazure.visualstudio.com/9912b5ff-89a4-4651-bae2-9452eb7992a8/_apis/build/Builds/126026324",
+    "web_url": null
+  },
+  {
+    "success": true,
+    "run_number": 2,
+    "pipeline_name": "integration",
+    "branch_used": "dev",
+    "run_id": 126026352,
+    "run_name": null,
+    "state": null,
+    "created_date": null,
+    "url": "https://msazure.visualstudio.com/9912b5ff-89a4-4651-bae2-9452eb7992a8/_apis/build/Builds/126026352",
+    "web_url": null
+  }
+]

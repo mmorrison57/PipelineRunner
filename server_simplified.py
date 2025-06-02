@@ -58,38 +58,23 @@ def dump_response(prefix: str, data: Any) -> str:
     return path
 
 def find_azure_cli_path() -> Optional[str]:
-    """Find the Azure CLI executable path with optimized search."""
-    # Try the most common Windows path first (fastest)
-    primary_path = r"C:\Program Files (x86)\Microsoft SDKs\Azure\CLI2\wbin\az.cmd"
-    
-    try:
-        result = subprocess.run(
-            [primary_path, "--version"],
-            capture_output=True,
-            text=True,
-            timeout=5,  # Quick timeout for path testing
-            check=False
-        )
-        if result.returncode == 0:
-            logger.info(f"Found Azure CLI at: {primary_path}")
-            return primary_path
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
-        pass
-    
-    # Fall back to other paths only if primary fails
-    fallback_paths = [
+    """Find the Azure CLI executable path."""
+    # Common Azure CLI installation paths
+    common_paths = [
+        r"C:\Program Files (x86)\Microsoft SDKs\Azure\CLI2\wbin\az.cmd",
         r"C:\Program Files\Microsoft SDKs\Azure\CLI2\wbin\az.cmd",
         "az.cmd",  # If in PATH
         "az"       # Linux/Mac style
     ]
     
-    for path in fallback_paths:
+    for path in common_paths:
         try:
+            # Test if the path works
             result = subprocess.run(
                 [path, "--version"],
                 capture_output=True,
                 text=True,
-                timeout=5,
+                timeout=10,
                 check=False
             )
             if result.returncode == 0:
@@ -98,14 +83,11 @@ def find_azure_cli_path() -> Optional[str]:
         except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
             continue
     
-    logger.error("Azure CLI not found in any common locations")
+    logger.error("Azure CLI not found in common locations")
     return None
 
-# Cache the Azure CLI path and auth status
+# Cache the Azure CLI path
 _azure_cli_path = None
-_auth_status_cache = None
-_auth_cache_time = None
-AUTH_CACHE_DURATION = 300  # 5 minutes
 
 def run_az_command(command: List[str]) -> Dict[str, Any]:
     """
@@ -135,12 +117,12 @@ def run_az_command(command: List[str]) -> Dict[str, Any]:
         
         logger.info(f"Running Azure CLI command: {' '.join(command)}")
         
-        # Run the command with shorter timeout for better responsiveness
+        # Run the command
         result = subprocess.run(
             command,
             capture_output=True,
             text=True,
-            timeout=30,  # Reduced from 60 to 30 seconds
+            timeout=60,  # 60 second timeout
             check=False  # Don't raise exception on non-zero exit
         )
         
@@ -164,67 +146,41 @@ def run_az_command(command: List[str]) -> Dict[str, Any]:
             
     except subprocess.TimeoutExpired:
         logger.error("Azure CLI command timed out")
-        return {"success": False, "error": "Command timed out after 30 seconds"}
+        return {"success": False, "error": "Command timed out after 60 seconds"}
     except Exception as e:
         logger.error(f"Error running Azure CLI command: {e}")
         return {"success": False, "error": str(e)}
 
 def check_azure_cli_auth() -> Dict[str, Any]:
-    """Check if Azure CLI is authenticated and can access Azure DevOps. Uses caching to improve performance."""
-    global _auth_status_cache, _auth_cache_time
-    
-    # Check if we have a valid cached result
-    current_time = datetime.datetime.now().timestamp()
-    if (_auth_status_cache is not None and 
-        _auth_cache_time is not None and 
-        current_time - _auth_cache_time < AUTH_CACHE_DURATION):
-        logger.info("Using cached authentication status")
-        return _auth_status_cache
-    
-    logger.info("Checking Azure CLI authentication (not cached)")
-    
+    """Check if Azure CLI is authenticated and can access Azure DevOps."""
     # Check if az command is available
     result = run_az_command(["az", "--version"])
     if not result["success"]:
-        auth_result = {
+        return {
             "authenticated": False,
             "error": "Azure CLI not found. Please install Azure CLI first.",
             "install_instructions": "Visit https://docs.microsoft.com/en-us/cli/azure/install-azure-cli"
         }
-        _auth_status_cache = auth_result
-        _auth_cache_time = current_time
-        return auth_result
     
     # Check if logged in
     result = run_az_command(["az", "account", "show"])
     if not result["success"]:
-        auth_result = {
+        return {
             "authenticated": False,
             "error": "Not logged into Azure CLI. Please run 'az login' first.",
             "suggestion": "Run 'az login' to authenticate with Azure"
         }
-        _auth_status_cache = auth_result
-        _auth_cache_time = current_time
-        return auth_result
     
     # Check if Azure DevOps extension is available
     result = run_az_command(["az", "extension", "show", "--name", "azure-devops"])
     if not result["success"]:
-        auth_result = {
+        return {
             "authenticated": False,
             "error": "Azure DevOps extension not installed.",
             "suggestion": "Run 'az extension add --name azure-devops' to install the extension"
         }
-        _auth_status_cache = auth_result
-        _auth_cache_time = current_time
-        return auth_result
     
-    # All checks passed - cache the positive result
-    auth_result = {"authenticated": True, "account": result["data"]}
-    _auth_status_cache = auth_result
-    _auth_cache_time = current_time
-    
-    return auth_result
+    return {"authenticated": True, "account": result["data"]}
 
 # Load pipeline configuration
 pipelines = load_config(CONFIG_PATH)
@@ -526,22 +482,6 @@ def test_pipeline_access(name: str) -> Dict[str, Any]:
             "access_test": "❌ Failed to access pipeline",
             "suggestion": "Check if the pipeline ID, organization, and project are correct, and you have permissions"
         }
-
-@mcp.tool(
-    name="clear_auth_cache",
-    description="Clear the authentication cache to force re-checking Azure CLI status"
-)
-def clear_auth_cache() -> Dict[str, Any]:
-    """Clear the authentication cache to force fresh auth checks."""
-    global _auth_status_cache, _auth_cache_time
-    
-    _auth_status_cache = None
-    _auth_cache_time = None
-    
-    return {
-        "success": True,
-        "message": "Authentication cache cleared. Next tool call will re-check Azure CLI status."
-    }
 
 if __name__ == "__main__":
     # Run the MCP server
