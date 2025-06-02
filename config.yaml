@@ -3,17 +3,9 @@ pipelines:
     organization: "msazure"
     project: "Antares"
     pipelineID: 331421
-    branch: "user/mm/104-prev-state"
+    branch: "dev"
   - name: "mmorrison1 stampy"
     organization: "msazure"
     project: "Antares"
     pipelineID: 390216
     branch: "dev"
-
-# Local repositories configuration
-# This allows referencing repos by name or partial name instead of full paths
-repositories:
-  - name: "Antares-Websites"
-    aliases: ["websites", "antares-websites", "aapt-antares-websites"]
-    path: "q:\\wagit\\AAPT-Antares-Websites"
-    description: "Main Antares websites repository"

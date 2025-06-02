@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+"""
+Simplified Azure DevOps MCP Server - Performance Optimized
+Focuses only on pipeline name matching and execution using config.yaml data.
+Removed git repository checking to improve MCP server performance.
+"""
+
 import os
 import yaml
 import json
@@ -19,21 +26,20 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Load pipeline metadata from config.yaml
 CONFIG_PATH = os.path.join(BASE_DIR, "config.yaml")
 
-def load_config(path: str) -> tuple[Dict[str, Dict[str, Any]], Dict[str, Dict[str, Any]]]:
-    """Load pipeline and repository configuration from YAML file."""
+def load_config(path: str) -> Dict[str, Dict[str, Any]]:
+    """Load pipeline configuration from YAML file."""
     with open(path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
     
     pipelines = {p["name"]: p for p in data.get("pipelines", [])}
-    repositories = {r["name"]: r for r in data.get("repositories", [])}
     
-    return pipelines, repositories
+    return pipelines
 
 # Initialize FastMCP server
 dependencies = ["PyYAML"]
 mcp = FastMCP(
     name="ado-pipelines-cli",
-    version="0.2.0",  # New version for CLI-based implementation
+    version="0.3.0",  # New version for simplified, performance-optimized implementation
     dependencies=dependencies,
 )
 
@@ -176,75 +182,8 @@ def check_azure_cli_auth() -> Dict[str, Any]:
     
     return {"authenticated": True, "account": result["data"]}
 
-# Load pipeline and repository configuration
-pipelines, repositories = load_config(CONFIG_PATH)
-
-def find_repository_by_name(query: str) -> Optional[Dict[str, Any]]:
-    """
-    Find a repository by name or alias.
-    
-    Args:
-        query: Repository name, alias, or partial name to search for
-        
-    Returns:
-        Repository configuration if found, None otherwise
-    """
-    query_lower = query.lower()
-    
-    # First, try exact name match
-    for name, repo in repositories.items():
-        if name.lower() == query_lower:
-            return repo
-    
-    # Then try alias match
-    for name, repo in repositories.items():
-        aliases = repo.get("aliases", [])
-        for alias in aliases:
-            if alias.lower() == query_lower:
-                return repo
-    
-    # Finally, try partial name match
-    for name, repo in repositories.items():
-        if query_lower in name.lower():
-            return repo
-        
-        # Also check aliases for partial matches
-        aliases = repo.get("aliases", [])
-        for alias in aliases:
-            if query_lower in alias.lower():
-                return repo
-    
-    return None
-
-def get_current_branch_from_repo(repo_path: str) -> Optional[str]:
-    """
-    Get the current branch from a repository path.
-    
-    Args:
-        repo_path: Path to the repository
-        
-    Returns:
-        Current branch name or None if error
-    """
-    try:
-        result = subprocess.run(
-            ["git", "branch", "--show-current"],
-            cwd=repo_path,
-            capture_output=True,
-            text=True,
-            timeout=10,
-            check=False
-        )
-        
-        if result.returncode == 0:
-            return result.stdout.strip()
-        else:
-            logger.warning(f"Failed to get branch from {repo_path}: {result.stderr}")
-            return None
-            
-    except Exception as e:
-        logger.error(f"Error getting branch from {repo_path}: {e}")
-        return None
+# Load pipeline configuration
+pipelines = load_config(CONFIG_PATH)
 
 @mcp.tool(
     name="bb7_list_runs",
@@ -305,9 +244,9 @@ def bb7_list_runs(name: str, top: int) -> Dict[str, Any]:
 
 @mcp.tool(
     name="bb7_trigger_bulk",
-    description="Trigger the configured pipeline 'count' times on its branch. Optionally specify a different branch or repository."
+    description="Trigger the configured pipeline 'count' times using the branch specified in config.yaml. Optionally override with a different branch."
 )
-def bb7_trigger_bulk(name: str, count: int, branch: Optional[str] = None, repo: Optional[str] = None) -> List[Dict[str, Any]]:
+def bb7_trigger_bulk(name: str, count: int, branch: Optional[str] = None) -> List[Dict[str, Any]]:
     """
     Trigger multiple pipeline runs using Azure CLI.
     
@@ -315,7 +254,6 @@ def bb7_trigger_bulk(name: str, count: int, branch: Optional[str] = None, repo: 
         name: Pipeline name from config.yaml
         count: Number of times to trigger the pipeline
         branch: Optional branch override (uses config branch if not specified)
-        repo: Optional repository name/alias to get current branch from
         
     Returns:
         List of results for each trigger attempt
@@ -329,41 +267,11 @@ def bb7_trigger_bulk(name: str, count: int, branch: Optional[str] = None, repo: 
         }]
     
     # Determine which branch to use
-    target_branch = branch
-    
-    # If no branch specified but repo is specified, get current branch from repo
-    if not target_branch and repo:
-        repo_config = find_repository_by_name(repo)
-        if repo_config:
-            repo_path = repo_config.get("path")
-            if repo_path:
-                current_branch = get_current_branch_from_repo(repo_path)
-                if current_branch:
-                    target_branch = current_branch
-                    logger.info(f"Using current branch '{current_branch}' from repository '{repo_config.get('name')}'")
-                else:
-                    return [{
-                        "error": f"Failed to get current branch from repository '{repo}'",
-                        "repo_path": repo_path
-                    }]
-            else:
-                return [{
-                    "error": f"Repository '{repo}' found but no path configured",
-                    "repository": repo_config.get("name")
-                }]
-        else:
-            return [{
-                "error": f"Repository '{repo}' not found in config",
-                "available_repositories": list(repositories.keys())
-            }]
-    
-    # Fall back to configured branch if still no target branch
-    if not target_branch:
-        target_branch = p.get("branch")
+    target_branch = branch if branch else p.get("branch")
     
     if not target_branch:
         return [{
-            "error": f"Pipeline '{name}' missing 'branch' in config.yaml and no branch/repo specified",
+            "error": f"Pipeline '{name}' missing 'branch' in config.yaml and no branch specified",
             "pipeline_config": p
         }]
     
@@ -574,173 +482,6 @@ def test_pipeline_access(name: str) -> Dict[str, Any]:
             "access_test": "❌ Failed to access pipeline",
             "suggestion": "Check if the pipeline ID, organization, and project are correct, and you have permissions"
         }
-
-@mcp.tool(
-    name="list_repositories",
-    description="List all configured local repositories"
-)
-def list_repositories() -> Dict[str, Any]:
-    """
-    List all repositories configured in config.yaml.
-    
-    Returns:
-        Dictionary with repository information
-    """
-    if not repositories:
-        return {
-            "error": "No repositories found in config.yaml",
-            "config_path": CONFIG_PATH
-        }
-    
-    repo_list = []
-    for name, config in repositories.items():
-        repo_list.append({
-            "name": name,
-            "path": config.get("path"),
-            "aliases": config.get("aliases", []),
-            "description": config.get("description", "")
-        })
-    
-    return {
-        "total_repositories": len(repo_list),
-        "repositories": repo_list,
-        "config_path": CONFIG_PATH
-    }
-
-@mcp.tool(
-    name="find_repository",
-    description="Find a repository by name or alias"
-)
-def find_repository(query: str) -> Dict[str, Any]:
-    """
-    Find a repository by name, alias, or partial match.
-    
-    Args:
-        query: Repository name, alias, or partial name to search for
-        
-    Returns:
-        Repository information if found
-    """
-    repo = find_repository_by_name(query)
-    
-    if repo:
-        return {
-            "success": True,
-            "query": query,
-            "repository": {
-                "name": repo.get("name"),
-                "path": repo.get("path"),
-                "aliases": repo.get("aliases", []),
-                "description": repo.get("description", "")
-            }
-        }
-    else:
-        # Show available repositories for help
-        available_repos = list(repositories.keys())
-        all_aliases = []
-        for r in repositories.values():
-            all_aliases.extend(r.get("aliases", []))
-        
-        return {
-            "success": False,
-            "query": query,
-            "error": f"Repository '{query}' not found",
-            "available_repositories": available_repos,
-            "available_aliases": all_aliases
-        }
-
-@mcp.tool(
-    name="get_repository_branch",
-    description="Get the current branch of a repository by name"
-)
-def get_repository_branch(repo_query: str) -> Dict[str, Any]:
-    """
-    Get the current branch of a repository.
-    
-    Args:
-        repo_query: Repository name, alias, or partial name
-        
-    Returns:
-        Current branch information
-    """
-    repo = find_repository_by_name(repo_query)
-    
-    if not repo:
-        return {
-            "success": False,
-            "query": repo_query,
-            "error": f"Repository '{repo_query}' not found",
-            "available_repositories": list(repositories.keys())
-        }
-    
-    repo_path = repo.get("path")
-    if not repo_path:
-        return {
-            "success": False,
-            "repository": repo.get("name"),
-            "error": "Repository path not configured"
-        }
-    
-    current_branch = get_current_branch_from_repo(repo_path)
-    
-    if current_branch:
-        return {
-            "success": True,
-            "repository": repo.get("name"),
-            "path": repo_path,
-            "current_branch": current_branch,
-            "description": repo.get("description", "")
-        }
-    else:
-        return {
-            "success": False,
-            "repository": repo.get("name"),
-            "path": repo_path,
-            "error": "Failed to get current branch (not a git repository or git not accessible)"
-        }
-
-@mcp.tool(
-    name="trigger_pipeline_with_repo",
-    description="Trigger a pipeline using the current branch from a specified repository"
-)
-def trigger_pipeline_with_repo(pipeline_name: str, repo_name: str, count: int = 1) -> List[Dict[str, Any]]:
-    """
-    Convenient function to trigger a pipeline with the current branch from a repository.
-    
-    Args:
-        pipeline_name: Pipeline name from config.yaml
-        repo_name: Repository name, alias, or partial name
-        count: Number of times to trigger the pipeline (default: 1)
-        
-    Returns:
-        List of trigger results
-    """
-    # Find the repository
-    repo = find_repository_by_name(repo_name)
-    if not repo:
-        return [{
-            "error": f"Repository '{repo_name}' not found",
-            "available_repositories": list(repositories.keys())
-        }]
-    
-    # Get current branch from repository
-    repo_path = repo.get("path")
-    if not repo_path:
-        return [{
-            "error": f"Repository '{repo.get('name')}' found but no path configured"
-        }]
-    
-    current_branch = get_current_branch_from_repo(repo_path)
-    if not current_branch:
-        return [{
-            "error": f"Failed to get current branch from repository '{repo.get('name')}'",
-            "repo_path": repo_path
-        }]
-    
-    # Trigger the pipeline with the detected branch
-    logger.info(f"Triggering pipeline '{pipeline_name}' {count} time(s) with branch '{current_branch}' from repository '{repo.get('name')}'")
-    
-    return bb7_trigger_bulk(pipeline_name, count, current_branch)
 
 if __name__ == "__main__":
     # Run the MCP server
