@@ -16,11 +16,6 @@ The AdoMcp tool is a Model Context Protocol (MCP) server that interacts with Azu
    - Access detailed build information and logs
    - Monitor pipeline execution progress
 
-3. **Pipeline Management**
-   - List all available configured pipelines
-   - Test pipeline accessibility and permissions
-   - Check Azure CLI authentication status
-
 ## Configuration
 The tool uses a `config.yaml` file to define the pipelines it interacts with. Each pipeline entry includes:
 - `name`: The name of the pipeline. This can be any user-defined string for identification purposes. Make the names distinct enought that copilot recognizes which pipeline is the correct one.
@@ -117,8 +112,6 @@ The MCP server provides tools to verify your authentication status:
 * `Trigger 3 runs of the integration test pipeline` 
 * `List the most recent 5 runs of the integration test pipeline`
 * `Kick off my stampy pipeline`
-* `Check if Azure CLI is working`
-* `Show me all available pipelines`
 
 ## Troubleshooting
 
