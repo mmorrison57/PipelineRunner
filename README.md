@@ -79,10 +79,9 @@ The AdoMcp tool uses Azure CLI for authentication, which provides secure, automa
 
 ### Authentication Verification
 
-The MCP server provides tools to verify your authentication status:
-- `check_azure_cli_status` - Verify Azure CLI login and DevOps extension
-- `test_pipeline_access` - Test access to configured pipelines
-- `list_available_pipelines` - Show all configured pipelines
+The MCP server provides tools to verify your setup:
+- `bb7_trigger_bulk` - Trigger pipeline runs (with built-in error checking)
+- `bb7_list_runs` - List recent pipeline runs and verify access
 
 ## Benefits of CLI-Based Approach
 
@@ -104,7 +103,7 @@ The MCP server provides tools to verify your authentication status:
 4. Open VSCode command palette and type "MCP" - select "Add Server".
 5. Start the MCP server:
    ```bash
-   python server.py
+   python server_simple.py
    ```
 6. Use GitHub Copilot chat in agent mode.
 
